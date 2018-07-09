@@ -130,9 +130,6 @@ void PointCloudPair::GetSpatialNeighbMatches(std::tr1::unordered_map<size_t, std
 
     positive_match_map.clear();
     negative_match_map.clear();
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = 0; i < match_pairs_.size(); i++)
     {
         size_t point_index1 = match_pairs_[i].first;
