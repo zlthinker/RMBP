@@ -35,7 +35,9 @@ bool ReadMatchFile(std::string const & match_file,
 int main(int argc, char* argv[])
 {
     std::string match_file = argv[1];
-    std::cout << "Read match file: " << match_file << "\n";
+    double belief_threshold = std::atof(argv[2]);
+    std::cout << "Read match file: " << match_file << "\n"
+              << "Belief threshold is set to " << belief_threshold << "\n";
 
     std::tr1::unordered_map<size_t, V3d> coords1;
     std::tr1::unordered_map<size_t, V3d> coords2;
@@ -44,7 +46,7 @@ int main(int argc, char* argv[])
     ReadMatchFile(match_file, coords1, coords2, match_pairs, init_inlier_probs);
 
     std::vector<std::pair<size_t, size_t> > refine_match_pairs;
-    RMBP(coords1, coords2, match_pairs, init_inlier_probs, refine_match_pairs, 0.45, 100);
+    RMBP(coords1, coords2, match_pairs, init_inlier_probs, refine_match_pairs, belief_threshold, 100);
 
     std::cout << "# refine match pairs after RMBP: " << refine_match_pairs.size() << "\n";
     for (size_t midx = 0; midx < refine_match_pairs.size(); midx++)
