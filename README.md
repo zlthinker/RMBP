@@ -5,7 +5,7 @@ Robust Matching using Belief Propagation (RMBP) is a robust matcher used to reje
 It is proposed by the ECCV 2018 paper:
 
 "Learning and Matching Multi-View Descriptors for Registration of Point Clouds", 
-Lei Zhou, Siyu Zhu, Zixin Luo, Tianwei Shen, Runze Zhang, Mingmin Zhen, Tian Fang, Long Quan.
+[Lei Zhou](https://zlthinker.github.io/), Siyu Zhu, Zixin Luo, Tianwei Shen, Runze Zhang, Mingmin Zhen, Tian Fang, Long Quan. [[PDF]](https://arxiv.org/pdf/1807.05653.pdf)
 
 ## Usage
 
