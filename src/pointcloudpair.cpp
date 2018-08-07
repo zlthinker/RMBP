@@ -9,7 +9,7 @@ PointCloudPair::PointCloudPair(std::tr1::unordered_map<size_t, V3d> const & coor
                                std::vector<std::pair<size_t, size_t> > const & match_pairs) :
     coords1_(coords1), coords2_(coords2), match_pairs_(match_pairs)
 {
-    init_inlier_prob_.resize(match_pairs.size(), 1.0);
+    init_inlier_prob_.resize(match_pairs.size(), 0.5);
     LoadMatches(match_pairs, init_inlier_prob_);
 }
 
