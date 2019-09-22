@@ -1,5 +1,42 @@
 #include "pointcloudpair.h"
 #include <fstream>
+#include <string.h>
+
+struct RMBPParam
+{
+    RMBPParam() : match_file(""), belief_threshold(0.5), log_file("") {}
+
+    std::string match_file;
+    double belief_threshold;
+    std::string log_file;
+};
+
+void ParseCommand(int argc, char* argv[], RMBPParam & param)
+{
+    for (int i = 1; i < argc; i++)
+    {
+        if (strcmp(argv[i], "-match") == 0)
+        {
+            param.match_file = argv[++i];
+            std::cout << "[ParseCommand] Read match file: " << param.match_file << "\n";
+        }
+        else if (strcmp(argv[i], "-belief") == 0)
+        {
+            param.belief_threshold = atof(argv[++i]);
+            std::cout << "[ParseCommand] Belief threshold is set to " << param.belief_threshold << "\n";
+        }
+        else if (strcmp(argv[i], "-log") == 0)
+        {
+            param.log_file = argv[++i];
+        }
+        else
+        {
+            std::cout << "Invalid argument: " << argv[i] << "\n";
+            exit(-1);
+        }
+    }
+    assert(param.match_file != "" && "No input match file");
+}
 
 bool ReadMatchFile(std::string const & match_file,
                    std::tr1::unordered_map<size_t, V3d> & coords1,
@@ -34,24 +71,34 @@ bool ReadMatchFile(std::string const & match_file,
 
 int main(int argc, char* argv[])
 {
-    std::string match_file = argv[1];
-    double belief_threshold = std::atof(argv[2]);
-    std::cout << "Read match file: " << match_file << "\n"
-              << "Belief threshold is set to " << belief_threshold << "\n";
+    RMBPParam param;
+    ParseCommand(argc, argv, param);
 
     std::tr1::unordered_map<size_t, V3d> coords1;
     std::tr1::unordered_map<size_t, V3d> coords2;
     std::vector<std::pair<size_t, size_t> > match_pairs;
     std::vector<double> init_inlier_probs;
-    ReadMatchFile(match_file, coords1, coords2, match_pairs, init_inlier_probs);
+    ReadMatchFile(param.match_file, coords1, coords2, match_pairs, init_inlier_probs);
 
     std::vector<std::pair<size_t, size_t> > refine_match_pairs;
-    RMBP(coords1, coords2, match_pairs, init_inlier_probs, refine_match_pairs, belief_threshold, 100);
+    RMBP(coords1, coords2, match_pairs, init_inlier_probs, refine_match_pairs, param.belief_threshold, 100);
 
     std::cout << "# refine match pairs after RMBP: " << refine_match_pairs.size() << "\n";
-    for (size_t midx = 0; midx < refine_match_pairs.size(); midx++)
+
+    if (param.log_file != "")
     {
-        std::cout << refine_match_pairs[midx].first << "\t" << refine_match_pairs[midx].second << "\n";
+        std::ofstream fout(param.log_file);
+        fout << refine_match_pairs.size() << "\n";
+        for (size_t midx = 0; midx < refine_match_pairs.size(); midx++)
+        {
+            size_t index = refine_match_pairs[midx].first;
+            V3d coord1 = coords1[index];
+            V3d coord2 = coords2[index];
+            fout << coord1[0] << " " << coord1[1] << " " << coord1[2] << "\t"
+                              << coord2[0] << " " << coord2[1] << " " << coord2[2] << "\t"
+                              << param.belief_threshold << "\n";
+        }
+        fout.close();
     }
     return 0;
 }
