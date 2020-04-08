@@ -16,8 +16,8 @@ If you find this project useful, please cite:
 
 ## Introduction
 
-RMBP is a robust matching approach, aiming at rejecting outlier 2D or 3D keypoint matches based on the efficient inference via belief propagation on the defined graphical model.
-Therefore, it can contribute to the robustness of point cloud registration and image matching. As shown below, RMBP facilitates the registration of point clouds with deficient geometric overlap although the outlier matches outnumber the inlier matches greatly.
+RMBP is a robust matching approach, aiming at rejecting outlier 2D or 3D keypoint matches based on the inference via belief propagation on the defined graphical model.
+Therefore, it can contribute to the robustness of point cloud registration and image matching. As shown below, RMBP facilitates the registration of point clouds with deficient geometric overlap although the outlier matches outnumber the inlier matches greatly in such cases.
 
 ![Alt Text](doc/fragments.png)
 
@@ -42,8 +42,8 @@ make -j
 ### Command
 
 The command is in the form of ```./RMBP <path_to_match_file> <path_to_save_match_file> --belief <belief_threshold> --iteration <iteration_number>```
-* ```<belief_threshold>``` is the threshold distinguishing an inlier or outlier. A match pair will be seen as an outlier if its belief is smaller than <belief_threshold>,
-* ```<iteration_number>``` is the number of iterations belief propagation will run.
+* ```<belief_threshold>``` is the threshold distinguishing an inlier from an outlier. A match pair will be seen as an outlier if its belief is smaller than ```<belief_threshold>```,
+* ```<iteration_number>``` is the number of iterations belief propagation will run through.
 
 ### 3D-3D matching
 
