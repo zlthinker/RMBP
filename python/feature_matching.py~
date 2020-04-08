@@ -7,7 +7,7 @@ def feature_match(image_file1, image_file2, ratio_test=True, log_file=''):
     img1 = cv.imread(image_file1)          # queryImage
     img2 = cv.imread(image_file2) # trainImage
 
-    feat = cv.xfeatures2d.SIFT_create()
+    feat = cv.xfeatures2d.SIFT_create(30000)
     kp1, des1 = feat.detectAndCompute(img1,None)
     kp2, des2 = feat.detectAndCompute(img2,None)
     print '#features of image1:', len(kp1)
@@ -35,7 +35,7 @@ def feature_match(image_file1, image_file2, ratio_test=True, log_file=''):
                 coord1 = kp1[index1].pt
                 coord2 = kp2[index2].pt
                 ratio = m.distance / n.distance # ratio \in (0, 1)
-                prob = 1 - ratio                # The smaller the ratio, the higher the probability
+                prob = 0.5#1 - ratio                # The smaller the ratio, the higher the probability
                 fout.write('%f %f %f %f %f %f %f\n' % (coord1[0], coord1[1], 0.0, coord2[0], coord2[1], 0.0, prob))
 
     img3 = cv.drawMatchesKnn(img1,kp1,img2,kp2,good,None,flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('image1', type=str, help="Image file1")
     parser.add_argument('image2', type=str, help="Image file2")
-    parser.add_argument('-log', type=str, help="Log file")
+    parser.add_argument('-log', type=str, default='', help="Log file")
     args = parser.parse_args()
 
-    feature_match(args.image1, args.image2, ratio_test=False, log_file=args.log)
+    feature_match(args.image1, args.image2, ratio_test=True, log_file=args.log)

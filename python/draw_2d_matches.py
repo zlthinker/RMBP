@@ -1,6 +1,7 @@
 import cv2 as cv
 import matplotlib.pyplot as plt
 import argparse
+import numpy as np
 
 def read_lines(filepath):
     with open(filepath) as fin:
@@ -22,11 +23,34 @@ def parge_match_file(file):
         val2 = float(elements[1])
         val3 = float(elements[3])
         val4 = float(elements[4])
-        print val1, val2, val3, val4
         kp1.append(cv.KeyPoint(x=val1, y=val2, _size=1))
         kp2.append(cv.KeyPoint(x=val3, y=val4, _size=1))
         matches.append(cv.DMatch(_queryIdx=i-1, _trainIdx=i-1, _distance=0.0))
     return kp1, kp2, matches
+
+def drawMatches(img1, kp1, img2, kp2, matches):
+    space = 1000
+    thickness = 6
+    color = (255, 0, 0)
+
+    h1, w1, c1 = img1.shape
+    h2, w2, c2 = img2.shape
+    print img1.shape, img1.dtype
+    assert h1 == h2
+    assert c1 == c2
+    concat = np.ones(shape=(h1, w1+w2+space, c1), dtype=img1.dtype) * 255
+    concat[:, 0:w1, :] = img1
+    concat[:, w1+space:w1+space+w2, :] = img2
+
+    for m, n in matches:
+        index1 = m.queryIdx
+        index2 = m.trainIdx
+        coord1 = kp1[index1].pt
+        coord2 = kp2[index2].pt
+        coord1 = (int(coord1[0]), int(coord1[1]))
+        coord2 = (int(coord2[0])+w1+space, int(coord2[1]))
+        cv.line(concat, coord1, coord2, color, thickness)
+    return concat
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -6,9 +6,9 @@ struct RMBPParam
 {
     RMBPParam() :
         match_file(""),
-        belief_threshold(0.5),
+        belief_threshold(0.45),
         log_file(""),
-        max_iteration(50) {}
+        max_iteration(20) {}
 
     std::string match_file;
     double belief_threshold;
@@ -16,36 +16,46 @@ struct RMBPParam
     size_t max_iteration;
 };
 
+void PrintHelp()
+{
+    std::cout << "<exe> <match_file> <output_file>\n"
+              << "--iteration <val> : Set maximum iteration, default val = 20 \n"
+              << "--belief <val> : Set belief threshold that distinguishes inlier/outlier, default val = 0.45 \n";
+}
+
 void ParseCommand(int argc, char* argv[], RMBPParam & param)
 {
-    for (int i = 1; i < argc; i++)
+    if (argc < 3)
     {
-        if (strcmp(argv[i], "-match") == 0)
+        PrintHelp();
+        exit(-1);
+    }
+
+    param.match_file = argv[1];
+    param.log_file = argv[2];
+
+    size_t i = 3;
+    while (i < argc)
+    {
+        std::cout << i << ", option = " << argv[i] << "\n";
+        if (strcmp(argv[i], "--belief") == 0)
         {
-            param.match_file = argv[++i];
-            std::cout << "[ParseCommand] Read match file: " << param.match_file << "\n";
-        }
-        else if (strcmp(argv[i], "-belief") == 0)
-        {
-            param.belief_threshold = atof(argv[++i]);
+            i++;
+            param.belief_threshold = atof(argv[i++]);
             std::cout << "[ParseCommand] Belief threshold is set to " << param.belief_threshold << "\n";
         }
-        else if (strcmp(argv[i], "-log") == 0)
+        else if (strcmp(argv[i], "--iter") == 0)
         {
-            param.log_file = argv[++i];
-        }
-        else if (strcmp(argv[i], "-iter") == 0)
-        {
-            param.max_iteration = atoi(argv[++i]);
+            param.max_iteration = atoi(argv[i++]);
             std::cout << "[ParseCommand] Max iteration is set to " << param.max_iteration << "\n";
         }
         else
         {
             std::cout << "Invalid argument: " << argv[i] << "\n";
+            PrintHelp();
             exit(-1);
         }
     }
-    assert(param.match_file != "" && "No input match file");
 }
 
 bool ReadMatchFile(std::string const & match_file,

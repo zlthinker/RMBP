@@ -2,6 +2,7 @@
 #define POINTMATCHGRPAH_H
 
 #include <tr1/unordered_map>
+#include <cmath>
 
 #include "lemon/list_graph.h"
 #include "lemon/maps.h"
