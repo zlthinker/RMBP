@@ -1,8 +1,7 @@
-import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
 import argparse
-from draw_matches import drawMatches
+from draw_2d_matches import drawMatches
 
 def feature_match(image_file1, image_file2, ratio_test=True, log_file=''):
     img1 = cv.imread(image_file1)          # queryImage
@@ -51,7 +50,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('image1', type=str, help="Image file1")
     parser.add_argument('image2', type=str, help="Image file2")
-    parser.add_argument('-log', type=str, default='', help="Log file")
+    parser.add_argument('--output', type=str, default='', help="Log file")
     args = parser.parse_args()
 
-    feature_match(args.image1, args.image2, ratio_test=True, log_file=args.log)
+    feature_match(args.image1, args.image2, ratio_test=True, log_file=args.output)

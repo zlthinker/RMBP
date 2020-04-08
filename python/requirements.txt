@@ -1,0 +1,5 @@
+open3d>=0.9.0
+numpy
+matplotlib
+opencv-python
+opencv-contrib-python

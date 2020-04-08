@@ -98,7 +98,8 @@ int main(int argc, char* argv[])
     std::tr1::unordered_map<size_t, V3d> coords2;
     std::vector<std::pair<size_t, size_t> > match_pairs;
     std::vector<double> init_inlier_probs;
-    ReadMatchFile(param.match_file, coords1, coords2, match_pairs, init_inlier_probs);
+    if (!ReadMatchFile(param.match_file, coords1, coords2, match_pairs, init_inlier_probs))
+        return -1;
 
     std::vector<std::pair<size_t, size_t> > refine_match_pairs;
     std::vector<double> refine_belief;
