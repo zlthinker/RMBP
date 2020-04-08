@@ -1,6 +1,7 @@
 # RMBP
 
-Robust Matching using Belief Propagation (RMBP) is an implementation the **ECCV 2018 paper**:
+Robust Matching using Belief Propagation (RMBP) is an implementation the **ECCV 2018 paper** -
+
 ["Learning and Matching Multi-View Descriptors for Registration of Point Clouds"](https://arxiv.org/pdf/1807.05653.pdf), [Lei Zhou](https://zlthinker.github.io/), Siyu Zhu, Zixin Luo, Tianwei Shen, Runze Zhang, Mingmin Zhen, Tian Fang, Long Quan.
 
 ## Introduction
@@ -31,8 +32,8 @@ make -j
 ### Command
 
 The command is in the form of ```./RMBP <path_to_match_file> <path_to_save_match_file> --belief <belief_threshold> --iteration <iteration_number>```
-* <belief_threshold> is the threshold distinguishing an inlier or outlier. A match pair will be seen as an outlier if its belief is smaller than <belief_threshold>,
-* <iteration_number> is the number of iterations belief propagation will run.
+* ```<belief_threshold>``` is the threshold distinguishing an inlier or outlier. A match pair will be seen as an outlier if its belief is smaller than <belief_threshold>,
+* ```<iteration_number>``` is the number of iterations belief propagation will run.
 
 ### 3D-3D matching
 
