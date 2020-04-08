@@ -434,7 +434,8 @@ bool PointCloudPair::StopCondition(std::tr1::unordered_map<size_t, V2d> const & 
 }
 
 void PointCloudPair::RefineMatchPairs(std::tr1::unordered_map<size_t, V2d> const & belief,
-                                      std::vector<std::pair<size_t, size_t> > & refine_match_pairs)
+                                      std::vector<std::pair<size_t, size_t> > & refine_match_pairs,
+                                      std::vector<double> & refine_belief)
 {
     std::vector<size_t> node_indexes;
     match_graph_.nodeIDs(node_indexes);
@@ -451,11 +452,13 @@ void PointCloudPair::RefineMatchPairs(std::tr1::unordered_map<size_t, V2d> const
         if (result[1] >= bp_param_.belief_threshold)
         {
             refine_match_pairs.push_back(std::make_pair(node.index(), node.pairIndex()));
+            refine_belief.push_back(result[1]);
         }
     }
 }
 
-bool PointCloudPair::BeliefPropagation(std::vector<std::pair<size_t, size_t> > & match_pairs)
+bool PointCloudPair::BeliefPropagation(std::vector<std::pair<size_t, size_t> > & match_pairs,
+                                       std::vector<double> & refine_belief)
 {
     if (match_pairs_.size() <= bp_param_.neg_neighb_bound)
     {
@@ -492,7 +495,7 @@ bool PointCloudPair::BeliefPropagation(std::vector<std::pair<size_t, size_t> > &
     }
 
     match_pairs.clear();
-    RefineMatchPairs(belief, match_pairs);
+    RefineMatchPairs(belief, match_pairs, refine_belief);
 
     return true;
 }
@@ -502,6 +505,7 @@ bool RMBP(std::tr1::unordered_map<size_t, V3d> const & coords1,
           std::vector<std::pair<size_t, size_t> > const & match_pairs,
           std::vector<double> const & init_inlier_probs,
           std::vector<std::pair<size_t, size_t> > & refine_match_pairs,
+          std::vector<double> & refine_belief,
           double belief_threshold,
           size_t max_iteration)
 {
@@ -509,7 +513,7 @@ bool RMBP(std::tr1::unordered_map<size_t, V3d> const & coords1,
     pc_pair.SetBeliefThreshold(belief_threshold);
     pc_pair.SetMaxIteration(max_iteration);
 
-    if (!pc_pair.BeliefPropagation(refine_match_pairs))
+    if (!pc_pair.BeliefPropagation(refine_match_pairs, refine_belief))
     {
         return false;
     }
