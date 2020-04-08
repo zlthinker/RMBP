@@ -4,6 +4,16 @@ Robust Matching using Belief Propagation (RMBP) is an implementation the **ECCV 
 
 ["Learning and Matching Multi-View Descriptors for Registration of Point Clouds"](https://arxiv.org/pdf/1807.05653.pdf), [Lei Zhou](https://zlthinker.github.io/), Siyu Zhu, Zixin Luo, Tianwei Shen, Runze Zhang, Mingmin Zhen, Tian Fang, Long Quan.
 
+If you find this project useful, please cite:
+```
+@inproceedings{zhou2018learning,
+  title={Learning and matching multi-view descriptors for registration of point clouds},
+  author={Zhou, Lei and Zhu, Siyu and Luo, Zixin and Shen, Tianwei and Zhang, Runze and Zhen, Mingmin and Fang, Tian and Quan, Long},
+  booktitle={Proceedings of the European Conference on Computer Vision (ECCV)},
+  year={2018}
+}
+```
+
 ## Introduction
 
 RMBP is a robust matching approach, aiming at rejecting outlier 2D or 3D keypoint matches based on the efficient inference via belief propagation on the defined graphical model.
@@ -65,3 +75,5 @@ mkdir build && cd build && cmake .. && make -j
 ```
 
 * You can visualize the matching results by running the script ```python python/draw_2d_matches.py test/2D-2D/0002.png test/2D-2D/0007.png <path_to_match_file>``` which will show the visualization results as below.
+
+![Alt Text](doc/2D-2D.png)
