@@ -86,10 +86,11 @@ private:
     {
         BPParam() :
             pos_neighb_percent(0.01),
-            neg_neighb_percent(0.1),
+            neg_neighb_percent(0.02),
             lambda(2.0),
             pos_neighb_bound(5),
-            neg_neighb_bound(100),
+            neg_neighb_lower_bound(100),
+            neg_neighb_upper_bound(500),
             max_pos_neighb_num(10),
             max_neg_neighb_num(50),
             delta_belief(1e-3),
@@ -102,7 +103,8 @@ private:
         double lambda;
 
         size_t pos_neighb_bound;
-        size_t neg_neighb_bound;
+        size_t neg_neighb_lower_bound;
+        size_t neg_neighb_upper_bound;
         size_t max_pos_neighb_num;
         size_t max_neg_neighb_num;
 

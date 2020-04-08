@@ -37,7 +37,6 @@ void ParseCommand(int argc, char* argv[], RMBPParam & param)
     size_t i = 3;
     while (i < argc)
     {
-        std::cout << i << ", option = " << argv[i] << "\n";
         if (strcmp(argv[i], "--belief") == 0)
         {
             i++;

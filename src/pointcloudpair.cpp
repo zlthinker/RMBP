@@ -119,19 +119,23 @@ void PointCloudPair::GetSpatialNeighbPoints(bool is_first,
 void PointCloudPair::GetSpatialNeighbMatches(std::tr1::unordered_map<size_t, std::vector<size_t> > & positive_match_map,
                                              std::tr1::unordered_map<size_t, std::vector<size_t> > & negative_match_map)
 {
-    std::cout << "GetSpatialNeighbMatches...\n";
+    
     size_t const num_neighbs_pos = std::min(bp_param_.pos_neighb_bound, size_t(match_pairs_.size() * bp_param_.pos_neighb_percent));
-    size_t const num_neighbs_neg = std::max(bp_param_.neg_neighb_bound, size_t(match_pairs_.size() * bp_param_.neg_neighb_percent));
+    size_t const num_neighbs_neg = std::min(bp_param_.neg_neighb_upper_bound, std::max(bp_param_.neg_neighb_lower_bound, size_t(match_pairs_.size() * bp_param_.neg_neighb_percent)));
+    std::cout << "[PointCloudPair::GetSpatialNeighbMatches] Search " << num_neighbs_pos << " positive neighbors and " 
+    << num_neighbs_neg << " negative neighbors for each match pair...\n";
     std::tr1::unordered_map<size_t, std::vector<size_t> > neighb_points1, neighb_points2;
     {
         GetSpatialNeighbPoints(true, num_neighbs_neg, neighb_points1);
         GetSpatialNeighbPoints(false, num_neighbs_neg, neighb_points2);
     }
+    std::cout << "Finish GetSpatialNeighbPoints...\n";
 
     positive_match_map.clear();
     negative_match_map.clear();
     for (int i = 0; i < match_pairs_.size(); i++)
     {
+        std::cout << "Match pair " << i << "\n";
         size_t point_index1 = match_pairs_[i].first;
         size_t point_index2 = match_pairs_[i].second;
         std::vector<size_t> const & id1_neighbs = neighb_points1[point_index1];
@@ -357,9 +361,7 @@ bool PointCloudPair::UpdateMessage(std::tr1::unordered_map<size_t, V2d> const & 
     std::vector<size_t> node_indexes;
     match_graph_.nodeIDs(node_indexes);
 
-#ifdef _OPENMP
 #pragma omp parallel for
-#endif
     for (size_t idx = 0; idx < node_indexes.size(); idx++)
     {
         size_t node_index = node_indexes[idx];
@@ -385,9 +387,7 @@ void PointCloudPair::ComputeBelief(std::tr1::unordered_map<size_t, V2d> const & 
     std::vector<size_t> node_indexes;
     match_graph_.nodeIDs(node_indexes);
 
-#ifdef _OPENMP
 #pragma omp parallel for
-#endif
     for (size_t idx = 0; idx < node_indexes.size(); idx++)
     {
         size_t node_index = node_indexes[idx];
@@ -460,7 +460,7 @@ void PointCloudPair::RefineMatchPairs(std::tr1::unordered_map<size_t, V2d> const
 bool PointCloudPair::BeliefPropagation(std::vector<std::pair<size_t, size_t> > & match_pairs,
                                        std::vector<double> & refine_belief)
 {
-    if (match_pairs_.size() <= bp_param_.neg_neighb_bound)
+    if (match_pairs_.size() <= bp_param_.neg_neighb_lower_bound)
     {
         WARNING("The number of match pairs is deficient: " << match_pairs_.size() << "\n");
         return false;
