@@ -2,5 +2,6 @@ CMakeLists.txt.user
 *.txt~
 *.md~
 *.py~
+*.pyc
 build
 .vscode/
