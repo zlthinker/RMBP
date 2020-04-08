@@ -14,6 +14,17 @@
 typedef std::tr1::array<double, 2> V2d;
 typedef std::tr1::array<double, 3> V3d;
 
+template<size_t D>
+double L2Distance(std::tr1::array<double, D> const & p1, std::tr1::array<double, D> const & p2)
+{
+    double distance;
+    for (size_t i = 0; i < D; i++)
+    {
+        distance += std::pow(p1[i] - p2[i], 2);
+    }
+    return std::sqrt(distance);
+}
+
 namespace std
 {
 namespace tr1
@@ -49,7 +60,7 @@ public:
     inline size_t MatchNum() const { return match_pairs_.size(); }
     inline void SetBeliefThreshold(double threshold) { bp_param_.belief_threshold = threshold; }
     inline void SetMaxIteration(size_t max_iteration) { bp_param_.max_iteration = max_iteration; }
-    bool BeliefPropagation(std::vector<std::pair<size_t, size_t> > & refine_match_pairs);
+    bool BeliefPropagation(std::vector<std::pair<size_t, size_t> > & refine_match_pairs, std::vector<double> & refine_belief);
 
 private:
     bool LoadMatches(std::vector<std::pair<size_t, size_t> > const & match_pairs,
@@ -78,7 +89,8 @@ private:
     bool StopCondition(std::tr1::unordered_map<size_t, V2d> const & belief1,
                        std::tr1::unordered_map<size_t, V2d> const & belief2);
     void RefineMatchPairs(std::tr1::unordered_map<size_t, V2d> const & belief,
-                          std::vector<std::pair<size_t, size_t> > & refine_match_pairs);
+                          std::vector<std::pair<size_t, size_t> > & refine_match_pairs,
+                          std::vector<double> & refine_belief);
 
 private:
     struct BPParam
@@ -86,24 +98,33 @@ private:
         BPParam() :
             pos_neighb_percent(0.01),
             neg_neighb_percent(0.1),
-            lambda(2.0),
-            pos_neighb_bound(5),
+            pos_neighb_bound(20),
             neg_neighb_bound(100),
-            max_pos_neighb_num(10),
-            max_neg_neighb_num(50),
+            max_pos_neighb_num(20),
+            max_neg_neighb_num(100),
+            pos_neighb_distance(10.0),
+            neg_neighb_distance(1000.0),
+            lambda(2.0),
             delta_belief(1e-3),
-            max_iteration(100),
+            max_iteration(50),
             belief_threshold(0.5) {}
 
         double pos_neighb_percent;
         double neg_neighb_percent;
-
-        double lambda;
-
         size_t pos_neighb_bound;
         size_t neg_neighb_bound;
         size_t max_pos_neighb_num;
         size_t max_neg_neighb_num;
+
+        /*!
+         * @brief The distances are only usefule when the scale is determined. For example, in image space, the distances are in pixels.
+         * @param pos_neighb_distance: max distance for positive neighbors
+         * @param neg_neighb_distance: min distance for negative neighbors
+         */
+        double pos_neighb_distance;
+        double neg_neighb_distance;
+
+        double lambda;
 
         double delta_belief;
         size_t max_iteration;
@@ -128,6 +149,7 @@ bool RMBP(std::tr1::unordered_map<size_t, V3d> const & coords1,
           std::vector<std::pair<size_t, size_t> > const & match_pairs,
           std::vector<double> const & init_inlier_probs,
           std::vector<std::pair<size_t, size_t> > & refine_match_pairs,
+          std::vector<double> & refine_belief,
           double belief_threshold = 0.5,
           size_t max_iteration = 100);
 

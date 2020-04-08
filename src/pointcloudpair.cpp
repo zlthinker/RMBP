@@ -89,11 +89,20 @@ void PointCloudPair::GetSpatialNeighbPoints(bool is_first,
         V3d coord = GetCoord(is_first, point_index);
         std::vector<double> query;
         for (int j = 0; j < 3; j++) { query.push_back(coord[j]); }
-        std::vector<int> neighb_idxs(num_neighbs);
-        std::vector<double> neighb_dists(num_neighbs);
+        std::vector<int> neighb_idxs;
+        std::vector<double> neighb_dists;
+        neighb_idxs.resize(num_neighbs);
+        neighb_dists.resize(num_neighbs);
         kd_tree.KnnSearch(query, neighb_idxs, neighb_dists, num_neighbs);
+
+        std::vector<int> radius_neighb_idxs;
+        std::vector<double> radius_neighb_dists;
+        kd_tree.RadiusSearch(query, radius_neighb_idxs, radius_neighb_dists, bp_param_.pos_neighb_distance);
+        neighb_idxs.insert(neighb_idxs.end(), radius_neighb_idxs.begin(), radius_neighb_idxs.end());
+
         std::vector<size_t> valid_neighbs_idxs;
-        valid_neighbs_idxs.reserve(num_neighbs);
+        valid_neighbs_idxs.reserve(neighb_idxs.size());
+        // filter out the query point
         for (int j = 0; j < neighb_idxs.size(); j++)
         {
             int idx = neighb_idxs[j];
@@ -124,8 +133,8 @@ void PointCloudPair::GetSpatialNeighbMatches(std::tr1::unordered_map<size_t, std
     size_t const num_neighbs_neg = std::max(bp_param_.neg_neighb_bound, size_t(match_pairs_.size() * bp_param_.neg_neighb_percent));
     std::tr1::unordered_map<size_t, std::vector<size_t> > neighb_points1, neighb_points2;
     {
-        GetSpatialNeighbPoints(true, num_neighbs_neg, neighb_points1);
-        GetSpatialNeighbPoints(false, num_neighbs_neg, neighb_points2);
+        GetSpatialNeighbPoints(true, num_neighbs_pos, neighb_points1);
+        GetSpatialNeighbPoints(false, num_neighbs_pos, neighb_points2);
     }
 
     positive_match_map.clear();
@@ -139,11 +148,18 @@ void PointCloudPair::GetSpatialNeighbMatches(std::tr1::unordered_map<size_t, std
         std::vector<size_t> positive_match_pairs, negative_match_pairs;
 
         std::set<size_t> id1_neighb_pair_set;
-        for (size_t i = 0; i < std::min(id1_neighbs.size(), num_neighbs_pos); i++)
+        for (size_t i = 0; i < id1_neighbs.size(); i++)
         {
             size_t id1_neighb = id1_neighbs[i];
             size_t id1_neighb_pair = point2point1_[id1_neighb];
             id1_neighb_pair_set.insert(id1_neighb_pair);
+        }
+        std::set<size_t> id2_neighb_pair_set;
+        for (size_t i = 0; i < id2_neighbs.size(); i++)
+        {
+            size_t id2_neighb = id2_neighbs[i];
+            size_t id2_neighb_pair = point2point2_[id2_neighb];
+            id2_neighb_pair_set.insert(id2_neighb_pair);
         }
 
         std::vector<size_t> mutual_id2_neighbs;
@@ -159,40 +175,41 @@ void PointCloudPair::GetSpatialNeighbMatches(std::tr1::unordered_map<size_t, std
             positive_match_pairs.push_back(id1_neighb);
         }
 
-        std::vector<size_t> union_id2_neighbs;
-        std::set_union(id1_neighb_pair_set.begin(), id1_neighb_pair_set.end(),
-                       id2_neighb_set.begin(), id2_neighb_set.end(),
-                       std::back_inserter(union_id2_neighbs));
-        for (int i = 0; i < union_id2_neighbs.size(); i++)
+        std::set<size_t>::iterator it1 = id1_neighb_pair_set.begin();
+        for (; it1 != id1_neighb_pair_set.end(); it1++)
         {
-            size_t id2_neighb = union_id2_neighbs[i];
-            size_t id1_neighb = point2point2_[id2_neighb];
-            size_t rank1 = id1_neighbs.size(), rank2 = id2_neighbs.size();
-            std::vector<size_t>::const_iterator it = std::find(id1_neighbs.begin(), id1_neighbs.end(), id1_neighb);
-            if (it != id1_neighbs.end())
+            size_t id1_neighb_pair = *it1;
+            V3d id1_neighb_pair_coord = GetCoord(false, id1_neighb_pair);
+            V3d id2_coord = GetCoord(false, point_index2);
+            double distance = L2Distance(id1_neighb_pair_coord, id2_coord);
+            if (distance > bp_param_.neg_neighb_distance)
             {
-                rank1 = std::distance(id1_neighbs.begin(), it);
-            }
-            it = std::find(id2_neighbs.begin(), id2_neighbs.end(), id2_neighb);
-            if (it != id2_neighbs.end())
-            {
-                rank2 = std::distance(id2_neighbs.begin(), it);
-            }
-            if ((rank1 < num_neighbs_pos && rank2 >= id1_neighbs.size()) ||
-                    (rank2 < num_neighbs_pos && rank1 >= id2_neighbs.size()))
-            {
+                size_t id1_neighb = point2point2_[id1_neighb_pair];
                 negative_match_pairs.push_back(id1_neighb);
             }
         }
 
-        if (positive_match_pairs.size() > bp_param_.max_pos_neighb_num)
+        std::set<size_t>::iterator it2 = id2_neighb_pair_set.begin();
+        for (; it2 != id2_neighb_pair_set.end(); it2++)
         {
-            positive_match_pairs.resize(bp_param_.max_pos_neighb_num);
+            size_t id2_neighb_pair = *it2;
+            V3d id2_neighb_pair_coord = GetCoord(true, id2_neighb_pair);
+            V3d id1_coord = GetCoord(true, point_index1);
+            double distance = L2Distance(id2_neighb_pair_coord, id1_coord);
+            if (distance > bp_param_.neg_neighb_distance)
+            {
+                negative_match_pairs.push_back(id2_neighb_pair);
+            }
         }
-        if (negative_match_pairs.size() > bp_param_.max_neg_neighb_num)
-        {
-            negative_match_pairs.resize(bp_param_.max_neg_neighb_num);
-        }
+
+//        if (positive_match_pairs.size() > bp_param_.max_pos_neighb_num)
+//        {
+//            positive_match_pairs.resize(bp_param_.max_pos_neighb_num);
+//        }
+//        if (negative_match_pairs.size() > bp_param_.max_neg_neighb_num)
+//        {
+//            negative_match_pairs.resize(bp_param_.max_neg_neighb_num);
+//        }
 
         positive_match_map[point_index1] = positive_match_pairs;
         negative_match_map[point_index1] = negative_match_pairs;
@@ -434,7 +451,8 @@ bool PointCloudPair::StopCondition(std::tr1::unordered_map<size_t, V2d> const & 
 }
 
 void PointCloudPair::RefineMatchPairs(std::tr1::unordered_map<size_t, V2d> const & belief,
-                                      std::vector<std::pair<size_t, size_t> > & refine_match_pairs)
+                                      std::vector<std::pair<size_t, size_t> > & refine_match_pairs,
+                                      std::vector<double> & refine_belief)
 {
     std::vector<size_t> node_indexes;
     match_graph_.nodeIDs(node_indexes);
@@ -451,11 +469,13 @@ void PointCloudPair::RefineMatchPairs(std::tr1::unordered_map<size_t, V2d> const
         if (result[1] >= bp_param_.belief_threshold)
         {
             refine_match_pairs.push_back(std::make_pair(node.index(), node.pairIndex()));
+            refine_belief.push_back(result[1]);
         }
     }
 }
 
-bool PointCloudPair::BeliefPropagation(std::vector<std::pair<size_t, size_t> > & match_pairs)
+bool PointCloudPair::BeliefPropagation(std::vector<std::pair<size_t, size_t> > & match_pairs,
+                                       std::vector<double> & refine_belief)
 {
     if (match_pairs_.size() <= bp_param_.neg_neighb_bound)
     {
@@ -492,7 +512,7 @@ bool PointCloudPair::BeliefPropagation(std::vector<std::pair<size_t, size_t> > &
     }
 
     match_pairs.clear();
-    RefineMatchPairs(belief, match_pairs);
+    RefineMatchPairs(belief, match_pairs, refine_belief);
 
     return true;
 }
@@ -502,6 +522,7 @@ bool RMBP(std::tr1::unordered_map<size_t, V3d> const & coords1,
           std::vector<std::pair<size_t, size_t> > const & match_pairs,
           std::vector<double> const & init_inlier_probs,
           std::vector<std::pair<size_t, size_t> > & refine_match_pairs,
+          std::vector<double> & refine_belief,
           double belief_threshold,
           size_t max_iteration)
 {
@@ -509,7 +530,7 @@ bool RMBP(std::tr1::unordered_map<size_t, V3d> const & coords1,
     pc_pair.SetBeliefThreshold(belief_threshold);
     pc_pair.SetMaxIteration(max_iteration);
 
-    if (!pc_pair.BeliefPropagation(refine_match_pairs))
+    if (!pc_pair.BeliefPropagation(refine_match_pairs, refine_belief))
     {
         return false;
     }
@@ -517,5 +538,42 @@ bool RMBP(std::tr1::unordered_map<size_t, V3d> const & coords1,
     return true;
 }
 
+bool RMBP(std::tr1::unordered_map<size_t, V2d> const & coords1,
+          std::tr1::unordered_map<size_t, V2d> const & coords2,
+          std::vector<std::pair<size_t, size_t> > const & match_pairs,
+          std::vector<double> const & init_inlier_probs,
+          std::vector<std::pair<size_t, size_t> > & refine_match_pairs,
+          std::vector<double> & refine_belief,
+          double belief_threshold,
+          size_t max_iteration)
+{
+    std::tr1::unordered_map<size_t, V3d> coords1_3d, coords2_3d;
+    std::tr1::unordered_map<size_t, V2d>::const_iterator it = coords1.begin();
+    for (; it != coords1.end(); it++)
+    {
+        size_t index = it->first;
+        V2d coord = it->second;
+        V3d coord_3d = {coord[0], coord[1], 0.0};
+        coords1_3d[index] = coord_3d;
+    }
+    it = coords2.begin();
+    for (; it != coords2.end(); it++)
+    {
+        size_t index = it->first;
+        V2d coord = it->second;
+        V3d coord_3d = {coord[0], coord[1], 0.0};
+        coords2_3d[index] = coord_3d;
+    }
 
+    PointCloudPair pc_pair(coords1_3d, coords2_3d, match_pairs, init_inlier_probs);
+    pc_pair.SetBeliefThreshold(belief_threshold);
+    pc_pair.SetMaxIteration(max_iteration);
+
+    if (!pc_pair.BeliefPropagation(refine_match_pairs, refine_belief))
+    {
+        return false;
+    }
+
+    return true;
+}
 

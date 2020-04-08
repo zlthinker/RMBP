@@ -70,3 +70,28 @@ bool KDTree::KnnSearch(std::vector<double> & query,
 
     return true;
 }
+
+bool KDTree::RadiusSearch(std::vector<double> & query,
+                  std::vector<int> & result_indices,
+                  std::vector<double> & result_dists,
+                  const double radius)
+{
+    assert(query.size() == static_cast<size_t>(Dim()));
+    assert(tree_ != NULL);
+
+    double square_radius = radius * radius;
+
+    tree_->annMaxPtsVisit(0);
+    int num_neighbs = tree_->annkFRSearch(query.begin().base(), square_radius, 0, NULL, NULL, 0.0);
+    result_indices.clear();
+    result_dists.clear();
+    result_indices.resize(num_neighbs);
+    result_dists.resize(num_neighbs);
+    tree_->annkFRSearch(query.begin().base(), square_radius, num_neighbs, result_indices.begin().base(), result_dists.begin().base(), 0.0);
+    tree_->annMaxPtsVisit(0);
+
+    for (size_t i = 0; i < result_dists.size(); i++)
+        result_dists[i] = std::sqrt(result_dists[i]);
+
+    return true;
+}

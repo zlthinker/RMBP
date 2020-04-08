@@ -20,6 +20,10 @@ public:
                    std::vector<int> & result_indices,
                    std::vector<double> & result_dists,
                    const int num_neighbs);
+    bool RadiusSearch(std::vector<double> & query,
+                      std::vector<int> & result_indices,
+                      std::vector<double> & result_dists,
+                      const double radius);
 
 private:
     ANNkd_tree * tree_;

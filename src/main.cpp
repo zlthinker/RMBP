@@ -4,11 +4,16 @@
 
 struct RMBPParam
 {
-    RMBPParam() : match_file(""), belief_threshold(0.5), log_file("") {}
+    RMBPParam() :
+        match_file(""),
+        belief_threshold(0.5),
+        log_file(""),
+        max_iteration(50) {}
 
     std::string match_file;
     double belief_threshold;
     std::string log_file;
+    size_t max_iteration;
 };
 
 void ParseCommand(int argc, char* argv[], RMBPParam & param)
@@ -28,6 +33,11 @@ void ParseCommand(int argc, char* argv[], RMBPParam & param)
         else if (strcmp(argv[i], "-log") == 0)
         {
             param.log_file = argv[++i];
+        }
+        else if (strcmp(argv[i], "-iter") == 0)
+        {
+            param.max_iteration = atoi(argv[++i]);
+            std::cout << "[ParseCommand] Max iteration is set to " << param.max_iteration << "\n";
         }
         else
         {
@@ -81,7 +91,9 @@ int main(int argc, char* argv[])
     ReadMatchFile(param.match_file, coords1, coords2, match_pairs, init_inlier_probs);
 
     std::vector<std::pair<size_t, size_t> > refine_match_pairs;
-    RMBP(coords1, coords2, match_pairs, init_inlier_probs, refine_match_pairs, param.belief_threshold, 100);
+    std::vector<double> refine_belief;
+    RMBP(coords1, coords2, match_pairs, init_inlier_probs, refine_match_pairs, refine_belief,
+         param.belief_threshold, param.max_iteration);
 
     std::cout << "# refine match pairs after RMBP: " << refine_match_pairs.size() << "\n";
 
@@ -96,7 +108,7 @@ int main(int argc, char* argv[])
             V3d coord2 = coords2[index];
             fout << coord1[0] << " " << coord1[1] << " " << coord1[2] << "\t"
                               << coord2[0] << " " << coord2[1] << " " << coord2[2] << "\t"
-                              << param.belief_threshold << "\n";
+                              << refine_belief[midx] << "\n";
         }
         fout.close();
     }
