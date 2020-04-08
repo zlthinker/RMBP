@@ -1,5 +1,4 @@
 import argparse, open3d
-import numpy as np
 
 def read_lines(filepath):
     with open(filepath) as fin:
